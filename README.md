@@ -17,11 +17,11 @@ run.
 | Sign-in | OAuth: the client opens CleanedWeb, you sign in and approve. Or send `Authorization: Bearer <API_KEY>`. |
 | Without an account | `https://api.cleanedweb.com/mcp?profile=public` answers `find_api` and `get_api` |
 | Registry | `com.cleanedweb/catalog` in the [official MCP registry](https://registry.modelcontextprotocol.io/v0/servers?search=com.cleanedweb) |
-| Docs | <https://cleanedweb.com/docs/mcp/> |
+| Docs | <https://cleanedweb.com/docs/mcp/?utm_source=github&utm_medium=mcp-repo> |
 
 **Pricing:** 5,000 records free once. Then prepaid credit from $1 per 1,000 records delivered; no
 subscription, credits never expire. A run that returns no records costs nothing.
-[Pricing](https://cleanedweb.com/pricing/)
+[Pricing](https://cleanedweb.com/pricing/?utm_source=github&utm_medium=mcp-repo)
 
 ## Connect
 
@@ -127,10 +127,10 @@ there to disconnect the client. Untick **Run APIs** when approving to give a cli
 
 ## Links
 
-[Website](https://cleanedweb.com) · [API catalog](https://cleanedweb.com/catalog/) ·
-[MCP docs](https://cleanedweb.com/docs/mcp/) ·
-[Agent quickstart](https://cleanedweb.com/agent-quickstart.md) ·
-[llms.txt](https://cleanedweb.com/llms.txt) · [Privacy](https://cleanedweb.com/legal/privacy/) ·
-Support: [cleanedweb.com/contact](https://cleanedweb.com/contact/)
+[Website](https://cleanedweb.com/?utm_source=github&utm_medium=mcp-repo) · [API catalog](https://cleanedweb.com/catalog/?utm_source=github&utm_medium=mcp-repo) ·
+[MCP docs](https://cleanedweb.com/docs/mcp/?utm_source=github&utm_medium=mcp-repo) ·
+[Agent quickstart](https://cleanedweb.com/agent-quickstart.md?utm_source=github&utm_medium=mcp-repo) ·
+[llms.txt](https://cleanedweb.com/llms.txt?utm_source=github&utm_medium=mcp-repo) · [Privacy](https://cleanedweb.com/legal/privacy/?utm_source=github&utm_medium=mcp-repo) ·
+Support: [cleanedweb.com/contact](https://cleanedweb.com/contact/?utm_source=github&utm_medium=mcp-repo)
 
 The files in this repository are MIT-licensed. The CleanedWeb service is governed by its own terms.
