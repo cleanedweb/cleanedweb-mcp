@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "cleanedweb": {
+      "type": "http",
+      "url": "https://api.cleanedweb.com/mcp?profile=catalog"
+    }
+  }
+}

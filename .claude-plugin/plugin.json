@@ -1,0 +1,10 @@
+{
+  "name": "cleanedweb",
+  "version": "1.0.0",
+  "description": "Find and run maintained REST APIs that return structured records from public websites.",
+  "author": { "name": "CleanedWeb", "url": "https://cleanedweb.com" },
+  "homepage": "https://cleanedweb.com/docs/mcp/",
+  "repository": "https://github.com/cleanedweb/cleanedweb-mcp",
+  "license": "MIT",
+  "keywords": ["web data", "structured data", "rest api", "mcp", "data extraction"]
+}

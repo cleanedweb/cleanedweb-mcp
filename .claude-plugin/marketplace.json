@@ -1,0 +1,15 @@
+{
+  "name": "cleanedweb",
+  "description": "CleanedWeb's hosted MCP server: maintained REST APIs that return structured records from public websites.",
+  "owner": {
+    "name": "CleanedWeb",
+    "url": "https://cleanedweb.com"
+  },
+  "plugins": [
+    {
+      "name": "cleanedweb",
+      "source": "./",
+      "description": "Find and run maintained REST APIs that return structured records from public websites."
+    }
+  ]
+}

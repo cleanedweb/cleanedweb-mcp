@@ -1,0 +1,11 @@
+{
+  "name": "cleanedweb",
+  "version": "1.0.0",
+  "description": "Find and run maintained REST APIs that return structured records from public websites.",
+  "contextFileName": "GEMINI.md",
+  "mcpServers": {
+    "cleanedweb": {
+      "httpUrl": "https://api.cleanedweb.com/mcp?profile=catalog"
+    }
+  }
+}
