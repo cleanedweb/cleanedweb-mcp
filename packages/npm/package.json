@@ -1,0 +1,38 @@
+{
+  "name": "@cleanedweb/mcp",
+  "version": "1.0.0",
+  "description": "Local stdio MCP server for CleanedWeb: forwards every request to the hosted server, so an agent can find and run maintained REST APIs that return structured records from public websites.",
+  "mcpName": "com.cleanedweb/catalog",
+  "keywords": ["mcp", "model-context-protocol", "web data", "rest api", "structured data", "scraping", "cleanedweb"],
+  "homepage": "https://cleanedweb.com/docs/mcp/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cleanedweb/cleanedweb-mcp.git",
+    "directory": "packages/npm"
+  },
+  "bugs": "https://cleanedweb.com/contact",
+  "license": "MIT",
+  "author": { "name": "CleanedWeb", "url": "https://cleanedweb.com" },
+  "type": "module",
+  "bin": { "cleanedweb-mcp": "dist/cli.js" },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": { ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" } },
+  "files": ["dist", "README.md", "LICENSE"],
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run build && vitest run",
+    "check:live": "npm run build && node scripts/live-check.mjs",
+    "prepublishOnly": "npm run build && vitest run"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}
