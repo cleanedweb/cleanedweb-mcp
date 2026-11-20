@@ -1,0 +1,58 @@
+# Publishes @cleanedweb/mcp to npm from GitHub Actions, with a provenance statement.
+#
+# Runs only when started by hand from the Actions tab, with "publish" typed in, and only while the
+# repository variable NPM_PUBLISH_ENABLED is "true".
+#
+# npm lets you add a trusted publisher only to a package that already exists, so:
+#   First release: add a granular access token with read and write access to packages (short
+#     expiry) as the repository secret NPM_TOKEN, run this workflow, then delete the secret.
+#   Afterwards: on npmjs.com, open @cleanedweb/mcp > Settings > Trusted publishing > GitHub Actions,
+#     with Organization or user: cleanedweb, Repository: cleanedweb-mcp, Workflow filename: publish-npm.yml,
+#     Environment: npm. Then set "Require two-factor authentication and disallow tokens".
+#
+# npm records provenance only for packages built from a public repository.
+#
+# Bump the version and its CHANGELOG entry on main before starting a run: npm refuses to
+# replace a version it already has.
+
+name: Publish to npm
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "publish" to publish to npm'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish
+    if: ${{ vars.NPM_PUBLISH_ENABLED == 'true' && inputs.confirm == 'publish' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: npm
+      url: https://www.npmjs.com/package/@cleanedweb/mcp
+    permissions:
+      contents: read
+      id-token: write
+    defaults:
+      run:
+        working-directory: packages/npm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          # Trusted publishing needs npm 11.5.1 or later, which Node 24 ships.
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+          cache: npm
+          cache-dependency-path: packages/npm/package-lock.json
+      - run: npm ci
+      # prepublishOnly runs the checks and the build before anything is uploaded.
+      - run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
