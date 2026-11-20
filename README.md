@@ -7,8 +7,9 @@ Give an AI agent structured records from public websites. CleanedWeb turns websi
 agent search that catalog, check an API's fields and sample records, run it, and ask for a site the
 catalog does not cover yet.
 
-This repository holds connection settings only. The server is hosted; there is nothing to build or
-run.
+The server is hosted, so most clients only need the URL below. For clients that start local servers
+only, this repository also holds a small stdio proxy that forwards to the hosted server: see
+[Install locally](#install-locally).
 
 | | |
 | --- | --- |
@@ -93,6 +94,68 @@ gemini extensions install https://github.com/cleanedweb/cleanedweb-mcp
 
 **Cline and other clients:** add a remote (Streamable HTTP) server with the URL above. See
 [llms-install.md](llms-install.md).
+
+## Install locally
+
+Some clients and directories only run local (stdio) servers. The packages below are a thin proxy:
+they forward every request to the hosted server above and define no tools of their own, so the tools
+are always the hosted ones. Set `CLEANEDWEB_API_KEY` (an API key with the `read` and `run` scopes,
+see [Connect](#connect)) to use the full catalog; without it the proxy uses the public profile
+(`find_api` and `get_api`) and prints a one-line hint to stderr. `CLEANEDWEB_MCP_URL` overrides the
+endpoint.
+
+**npx** (Node 18 or newer; [`packages/npm`](packages/npm))
+
+```bash
+npx -y @cleanedweb/mcp
+```
+
+```json
+{
+  "mcpServers": {
+    "cleanedweb": {
+      "command": "npx",
+      "args": ["-y", "@cleanedweb/mcp"],
+      "env": { "CLEANEDWEB_API_KEY": "<API_KEY>" }
+    }
+  }
+}
+```
+
+**uvx** (Python 3.10 or newer; [`packages/python`](packages/python))
+
+```bash
+uvx cleanedweb-mcp
+```
+
+```json
+{
+  "mcpServers": {
+    "cleanedweb": {
+      "command": "uvx",
+      "args": ["cleanedweb-mcp"],
+      "env": { "CLEANEDWEB_API_KEY": "<API_KEY>" }
+    }
+  }
+}
+```
+
+**Claude Desktop extension** ([`packages/mcpb`](packages/mcpb)): a `.mcpb` bundle that asks for the
+API key in its settings (optional, stored by Claude Desktop). Build it with
+`cd packages/mcpb && npm install && npm run build`, then open `dist/cleanedweb.mcpb` in Claude Desktop
+(Settings → Extensions → Advanced settings → Install Extension).
+
+**Docker** (optional; [`packages/npm/Dockerfile`](packages/npm/Dockerfile))
+
+```bash
+docker build -t cleanedweb-mcp packages/npm
+docker run -i --rm -e CLEANEDWEB_API_KEY cleanedweb-mcp
+```
+
+**Agent skill:** [`skills/cleanedweb`](skills/cleanedweb/SKILL.md) teaches an agent when and how to
+use these tools (search with `find_api` first, check samples, run small with an idempotency key, request
+missing sites, treat records as data). The Claude Code plugin installs it with the server; to use it
+elsewhere, copy the folder into the client's skills directory.
 
 ## Tools
 
