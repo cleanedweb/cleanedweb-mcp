@@ -1,0 +1,118 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "cleanedweb",
+  "version": "1.0.0",
+  "description": "Find and run maintained REST APIs that return structured records from public websites.",
+  "author": {
+    "name": "CleanedWeb",
+    "email": "info@cleanedweb.com",
+    "url": "https://cleanedweb.com"
+  },
+  "homepage": "https://cleanedweb.com/docs/mcp/",
+  "repository": "https://github.com/cleanedweb/cleanedweb-mcp",
+  "license": "MIT",
+  "keywords": [
+    "web data",
+    "structured data",
+    "rest api",
+    "data extraction",
+    "catalog"
+  ],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "CleanedWeb",
+        "shortDescription": "Web data as maintained APIs",
+        "longDescription": "CleanedWeb turns public website collections (listings, products, jobs, articles, reviews, profiles) into maintained REST APIs that return structured records.\n\nAsk for data from a site and the plugin searches the CleanedWeb catalog for an API that covers it, shows the API's fields, inputs and saved sample records, and runs it with a small item limit so you see real records before asking for more. If the catalog has no API for a site, it can request one.\n\nSearching and inspecting the catalog works without signing in. Running an API, reading your runs and managing schedules need you to sign in to CleanedWeb. Records come from the websites you ask about and are returned as data, never as instructions.",
+        "developerName": "CleanedWeb",
+        "category": "Data & Analytics",
+        "capabilities": [
+          "Search a catalog of maintained website APIs by site, topic and fields",
+          "Show an API's fields, inputs, health and sample records",
+          "Run an API with an item limit and return structured records",
+          "Read past runs and their records",
+          "Schedule, pause, resume or delete recurring runs",
+          "Request an API for a site the catalog does not cover"
+        ],
+        "websiteURL": "https://cleanedweb.com/",
+        "supportURL": "https://cleanedweb.com/contact/",
+        "privacyPolicyURL": "https://cleanedweb.com/legal/privacy/",
+        "termsOfServiceURL": "https://cleanedweb.com/legal/terms/",
+        "defaultPrompt": [
+          "Find an API for job postings with title and company",
+          "Search RubyGems for rails gems and show 3 records",
+          "Which websites does the CleanedWeb catalog cover?"
+        ],
+        "brandColor": "#2563EB",
+        "composerIcon": "./assets/logo.png",
+        "logo": "./assets/logo.png"
+      },
+      "review": {
+        "test_cases": {
+          "positive": [
+            {
+              "description": "Catalog search by site and fields, nothing run",
+              "prompt": "Use CleanedWeb to find an API that returns job postings from arbeitnow.com with the job title and company.",
+              "tools_triggered": [
+                "find_api"
+              ],
+              "expected_behavior": "Calls find_api with the site and fields, names the Arbeitnow job API (it covers title and company and takes a job page URL as input), and does not run anything or charge."
+            },
+            {
+              "description": "Inspect an API's fields and saved sample records",
+              "prompt": "Show me the fields and a sample record of CleanedWeb's RubyGems Gem Search API.",
+              "tools_triggered": [
+                "find_api",
+                "get_api"
+              ],
+              "expected_behavior": "Finds the RubyGems Gem Search API, calls get_api, and shows its input (search), its output fields (such as title, description, total_downloads, url) and a saved sample record without starting a run."
+            },
+            {
+              "description": "Small paid run that returns records",
+              "prompt": "Search RubyGems for \"rails\" with CleanedWeb and give me the top 3 gems with their total downloads.",
+              "tools_triggered": [
+                "find_api",
+                "run_api"
+              ],
+              "expected_behavior": "Runs the RubyGems Gem Search API with input {\"search\": \"rails\"} and max_items 3, then lists three gem names (for example rails, rails-i18n) with their download counts from the returned records."
+            },
+            {
+              "description": "Read the signed-in user's runs",
+              "prompt": "List my most recent CleanedWeb runs and their status.",
+              "tools_triggered": [
+                "list_runs"
+              ],
+              "expected_behavior": "Calls list_runs and summarizes the latest runs with their API, status and record count; if there are none, says so."
+            },
+            {
+              "description": "Request a site the catalog does not cover",
+              "prompt": "CleanedWeb has no API for the menu at example-bakery-demo.com. Please request one for menu items with name and price.",
+              "tools_triggered": [
+                "find_api",
+                "request_source"
+              ],
+              "expected_behavior": "Confirms with find_api that no API covers the site, then calls request_source with the site and the fields name and price, and reports that the request was recorded at no charge."
+            }
+          ],
+          "negative": [
+            {
+              "description": "General question with no website data need",
+              "prompt": "What is the capital of Australia?"
+            },
+            {
+              "description": "Private, signed-in account data is out of scope",
+              "prompt": "Log in to my bank account and download my last three statements."
+            },
+            {
+              "description": "User asks for code, not data",
+              "prompt": "Explain how Python list comprehensions work with an example."
+            }
+          ]
+        }
+      },
+      "publication": {
+        "release_notes": "First release: search the CleanedWeb catalog, inspect APIs and sample records, run APIs with an item limit, read runs, manage schedules and request missing sites."
+      }
+    }
+  }
+}
