@@ -1,6 +1,6 @@
 {
   "name": "@cleanedweb/mcp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Local stdio MCP server for CleanedWeb: forwards every request to the hosted server, so an agent can find and run maintained REST APIs that return structured records from public websites.",
   "mcpName": "com.cleanedweb/catalog",
   "keywords": ["mcp", "model-context-protocol", "web data", "rest api", "structured data", "scraping", "cleanedweb"],
