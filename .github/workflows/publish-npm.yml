@@ -24,6 +24,12 @@ on:
         description: 'Type "publish" to publish to npm'
         required: true
         type: string
+      mode:
+        description: 'publish, or stage (first release: npm holds the upload until an owner approves it with 2FA under Staged Packages)'
+        required: false
+        default: publish
+        type: choice
+        options: [publish, stage]
 
 permissions:
   contents: read
@@ -53,6 +59,12 @@ jobs:
           cache-dependency-path: packages/npm/package-lock.json
       - run: npm ci
       # prepublishOnly runs the checks and the build before anything is uploaded.
-      - run: npm publish --provenance --access public
+      - if: ${{ inputs.mode != 'stage' }}
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # npm 12 adds `npm stage publish`; a stage-only token cannot create a package directly.
+      - if: ${{ inputs.mode == 'stage' }}
+        run: npm run prepublishOnly --if-present && npx -y npm@12 stage publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
