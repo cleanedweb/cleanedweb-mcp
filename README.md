@@ -49,7 +49,9 @@ or install it as a plugin from this repository:
 /plugin install cleanedweb@cleanedweb
 ```
 
-**Cursor** (`~/.cursor/mcp.json`)
+**Cursor:** [![Add to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=cleanedweb&config=eyJ1cmwiOiJodHRwczovL2FwaS5jbGVhbmVkd2ViLmNvbS9tY3A%2FcHJvZmlsZT1jYXRhbG9nIn0%3D)
+(this repository is also a Cursor plugin: `.cursor-plugin/plugin.json`, `mcp.json` and the skill),
+or add it to `~/.cursor/mcp.json`:
 
 ```json
 {
