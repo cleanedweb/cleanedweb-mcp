@@ -18,6 +18,7 @@ only, this repository also holds a small stdio proxy that forwards to the hosted
 | Sign-in | OAuth: the client opens CleanedWeb, you sign in and approve. Or send `Authorization: Bearer <API_KEY>`. |
 | Without an account | `https://api.cleanedweb.com/mcp?profile=public` answers `find_api` and `get_api` |
 | Registry | `com.cleanedweb/catalog` in the [official MCP registry](https://registry.modelcontextprotocol.io/v0/servers?search=com.cleanedweb) |
+| Glama | [![cleanedweb/cleanedweb-mcp MCP server](https://glama.ai/mcp/servers/cleanedweb/cleanedweb-mcp/badges/score.svg)](https://glama.ai/mcp/servers/cleanedweb/cleanedweb-mcp) |
 | Docs | <https://cleanedweb.com/docs/mcp/?utm_source=github&utm_medium=mcp-repo> |
 
 **Pricing:** 5,000 records free once. Then prepaid credit from $1 per 1,000 records delivered; no
