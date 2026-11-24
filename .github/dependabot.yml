@@ -1,0 +1,18 @@
+# Weekly dependency updates for the proxy packages and the CI workflows.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directories: ["/packages/npm", "/packages/mcpb"]
+    schedule:
+      interval: weekly
+    groups:
+      npm-dev:
+        dependency-type: development
+  - package-ecosystem: pip
+    directory: /packages/python
+    schedule:
+      interval: weekly
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
