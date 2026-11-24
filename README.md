@@ -95,11 +95,13 @@ url = "https://api.cleanedweb.com/mcp?profile=catalog"
 # bearer_token_env_var = "CLEANEDWEB_API_KEY"
 ```
 
-**Gemini CLI**
+**Gemini CLI** (installs the server, its context file and the `cleanedweb` skill)
 
 ```bash
 gemini extensions install https://github.com/cleanedweb/cleanedweb-mcp
 ```
+
+Then sign in from Gemini CLI with `/mcp auth cleanedweb`; until then `/mcp` lists the server as disconnected.
 
 **Windsurf** (`~/.codeium/windsurf/mcp_config.json`)
 
