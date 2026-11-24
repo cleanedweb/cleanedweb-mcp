@@ -49,7 +49,7 @@ jobs:
       run:
         working-directory: packages/npm
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           # Trusted publishing needs npm 11.5.1 or later, which Node 24 ships.
