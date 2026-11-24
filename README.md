@@ -72,11 +72,27 @@ or add it to `~/.cursor/mcp.json`:
 }
 ```
 
-**Codex** (`~/.codex/config.toml`)
+**Codex** (CLI, IDE extension and app share one config)
+
+```bash
+codex mcp add cleanedweb --url "https://api.cleanedweb.com/mcp?profile=catalog"
+```
+
+Codex opens the sign-in right away; to sign in later, run `codex mcp login cleanedweb`.
+
+or install it as a plugin from this repository (server and skill):
+
+```bash
+codex plugin marketplace add cleanedweb/cleanedweb-mcp
+codex plugin add cleanedweb@cleanedweb
+```
+
+The same in `~/.codex/config.toml`; to use an API key instead of signing in, uncomment the last line:
 
 ```toml
 [mcp_servers.cleanedweb]
 url = "https://api.cleanedweb.com/mcp?profile=catalog"
+# bearer_token_env_var = "CLEANEDWEB_API_KEY"
 ```
 
 **Gemini CLI**
