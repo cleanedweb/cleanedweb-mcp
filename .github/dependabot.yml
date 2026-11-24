@@ -12,6 +12,10 @@ updates:
     directory: /packages/python
     schedule:
       interval: weekly
+    ignore:
+      # mcp 2.x renames the SDK's exceptions; moving to it is a code change, not a bump.
+      - dependency-name: mcp
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
