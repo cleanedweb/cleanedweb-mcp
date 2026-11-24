@@ -199,6 +199,6 @@ there to disconnect the client. Untick **Run APIs** when approving to give a cli
 [llms.txt](https://cleanedweb.com/llms.txt?utm_source=github&utm_medium=mcp-repo) · [Privacy](https://cleanedweb.com/legal/privacy/?utm_source=github&utm_medium=mcp-repo) ·
 Support: [cleanedweb.com/contact](https://cleanedweb.com/contact/?utm_source=github&utm_medium=mcp-repo)
 
-REST without MCP: [Postman collection](postman/cleanedweb.postman_collection.json) (find, run and example calls with saved responses).
+Postman: [public workspace](https://www.postman.com/cleanedweb/cleanedweb-api/overview) with an MCP collection and a REST collection (find, run and example calls with saved responses; also in [postman/](postman/cleanedweb.postman_collection.json)).
 
 The files in this repository are MIT-licensed. The CleanedWeb service is governed by its own terms.
