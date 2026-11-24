@@ -7,6 +7,32 @@ Give an AI agent structured records from public websites. CleanedWeb turns websi
 agent search that catalog, check an API's fields and sample records, run it, and ask for a site the
 catalog does not cover yet.
 
+<p align="center"><img src="assets/demo.gif" width="800" alt="Claude Code finds the Y Combinator jobs API with find_api, runs it with run_api and shows five job records as a table"></p>
+<p align="center"><sub>A real run in Claude Code: one prompt, two tool calls, five live records in 17 seconds.</sub></p>
+
+**Quick start (Claude Code):**
+
+```bash
+claude mcp add --transport http cleanedweb "https://api.cleanedweb.com/mcp?profile=catalog"
+```
+
+Then ask: *"Find an API for Y Combinator startup jobs and show me five."* Other clients are under
+[Connect](#connect).
+
+## Why use it
+
+- **No scraper code in your agent.** The agent asks for a site and the fields it needs, and gets
+  typed JSON records back, not HTML to parse.
+- **APIs that stay working.** Each catalog API is monitored, and repaired and versioned when its
+  site changes. Health is public on the [status page](https://cleanedweb.com/status/?utm_source=github&utm_medium=mcp-repo).
+- **Look before you pay.** `find_api` and `get_api` show fields and saved sample records without
+  running anything, and work without an account.
+- **Ask for missing sites.** `request_source` asks CleanedWeb to add a site the catalog lacks.
+
+If this is useful to you, a ⭐ on this repository helps other developers find it.
+
+## Server
+
 The server is hosted, so most clients only need the URL below. For clients that start local servers
 only, this repository also holds a small stdio proxy that forwards to the hosted server: see
 [Install locally](#install-locally).
