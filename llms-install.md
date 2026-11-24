@@ -15,7 +15,17 @@ install or run. If the client can only start local (stdio) servers, use the stdi
    should appear. Without any sign-in, `https://api.cleanedweb.com/mcp?profile=public` lists
    `find_api` and `get_api`.
 
-Cline (`cline_mcp_settings.json`):
+Cline: do not clone this repository or build anything; the hosted server needs no local install. Register
+it in Cline's MCP settings, which is the file `cline_mcp_settings.json` (in Cline for VS Code, open MCP
+Servers > Configure MCP Servers; in the Cline CLI it is `~/.cline/data/settings/cline_mcp_settings.json`).
+With the Cline CLI you can also run:
+
+```sh
+cline mcp add cleanedweb --transport streamableHttp --yes 'https://api.cleanedweb.com/mcp?profile=catalog'
+```
+
+Add `--header 'Authorization: Bearer <API_KEY>'` if sign-in in a browser is not possible (step 3). The
+entry in `cline_mcp_settings.json`:
 
 ```json
 {
