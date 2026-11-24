@@ -1,0 +1,571 @@
+{
+  "info": {
+    "name": "CleanedWeb API",
+    "description": "Maintained REST APIs that return structured records from public websites: job boards, marketplaces, app stores, package registries, research databases and more. Each API in the catalog has a fixed input contract and output schema, and CleanedWeb keeps it working when the site changes.\n\n## Get started\n1. **Find an API** (no key needed): run *List catalog APIs* with `q` set to a site or topic, then *Get an endpoint's contract* to see its inputs and record fields.\n2. **Get a key**: create an account at [cleanedweb.com](https://cleanedweb.com/?utm_source=postman&utm_medium=public-workspace) and an API key with the `run` scope under API keys. Paste it into the `api_key` collection variable (keep it as a secret; current value only).\n3. **Run it**: *Run an endpoint* or one of the ready examples. Start with a small `max_items`. A run that takes longer than `wait_seconds` answers 202; read *Read a run's result* with the same `Idempotency-Key` (the collection sets one per run).\n\nPricing is per accepted record: see [pricing](https://cleanedweb.com/pricing/?utm_source=postman&utm_medium=public-workspace). Missing a site? Ask for it from its [catalog page](https://cleanedweb.com/catalog/?utm_source=postman&utm_medium=public-workspace).\n\nDocs: [cleanedweb.com/docs](https://cleanedweb.com/docs/?utm_source=postman&utm_medium=public-workspace) \u00b7 OpenAPI: https://cleanedweb.com/catalog/openapi.json \u00b7 MCP server for AI agents: `https://api.cleanedweb.com/mcp?profile=catalog` ([setup](https://cleanedweb.com/docs/mcp/?utm_source=postman&utm_medium=public-workspace))",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{api_key}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "catalog_base",
+      "value": "https://app.cleanedweb.com"
+    },
+    {
+      "key": "api_base",
+      "value": "https://api.cleanedweb.com"
+    },
+    {
+      "key": "api_key",
+      "value": "",
+      "type": "secret"
+    },
+    {
+      "key": "idempotency_key",
+      "value": ""
+    },
+    {
+      "key": "api_id",
+      "value": "generated_b448cdefdbf826fea8b06011"
+    },
+    {
+      "key": "endpoint_id",
+      "value": "generated_b448cdefdbf826fea8b06011_search"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Find an API (no key)",
+      "description": "Reading the catalog needs no credential.",
+      "item": [
+        {
+          "name": "List catalog APIs",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{catalog_base}}/api/catalog/apis?q=rubygems&limit=20",
+              "host": [
+                "{{catalog_base}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "apis"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "rubygems"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Search the published APIs. `q` matches site, name and description; page with `limit` and `offset`; `sort` is `updated` or `name`."
+          }
+        },
+        {
+          "name": "Get an API",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{catalog_base}}/api/catalog/apis/{{api_id}}",
+              "host": [
+                "{{catalog_base}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "apis",
+                "{{api_id}}"
+              ]
+            },
+            "description": "One API: site, endpoints, versions, health and 30-day reliability."
+          }
+        },
+        {
+          "name": "Get an endpoint's contract",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{catalog_base}}/api/catalog/apis/{{api_id}}/endpoints/{{endpoint_id}}/contract",
+              "host": [
+                "{{catalog_base}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "apis",
+                "{{api_id}}",
+                "endpoints",
+                "{{endpoint_id}}",
+                "contract"
+              ]
+            },
+            "description": "The endpoint's `input_schema` (what you can send in `input`) and `output_schema` (the fields of each record)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Run an API",
+      "description": "Needs an API key with the `run` scope. Runs use the workspace's credits.",
+      "item": [
+        {
+          "name": "Run an endpoint",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// One Idempotency-Key per run. Read /result with the same key; send the POST again only with a new key.",
+                  "pm.collectionVariables.set('idempotency_key', pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('run answered', () => pm.expect([200, 202]).to.include(pm.response.code));",
+                  "if (pm.response.code === 200) { pm.test('records returned', () => pm.expect(pm.response.json().records).to.be.an('array')); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotency_key}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"input\": {\n    \"search\": \"rails\"\n  },\n  \"max_items\": 3,\n  \"wait_seconds\": 90\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{api_base}}/v1/catalog/public/apis/{{api_id}}/endpoints/{{endpoint_id}}/run",
+              "host": [
+                "{{api_base}}"
+              ],
+              "path": [
+                "v1",
+                "catalog",
+                "public",
+                "apis",
+                "{{api_id}}",
+                "endpoints",
+                "{{endpoint_id}}",
+                "run"
+              ]
+            },
+            "description": "Runs the endpoint's latest major (pin one with `\"version\": N`). `input` takes the fields of the contract's `input_schema`; unknown fields are rejected. `max_items` stops after that many de-duplicated records. 200 carries `records`; 202 means still running: read the result with the same Idempotency-Key."
+          }
+        },
+        {
+          "name": "Read a run's result",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotency_key}}"
+              }
+            ],
+            "url": {
+              "raw": "{{api_base}}/v1/catalog/public/apis/{{api_id}}/endpoints/{{endpoint_id}}/result",
+              "host": [
+                "{{api_base}}"
+              ],
+              "path": [
+                "v1",
+                "catalog",
+                "public",
+                "apis",
+                "{{api_id}}",
+                "endpoints",
+                "{{endpoint_id}}",
+                "result"
+              ]
+            },
+            "description": "Same API key and same Idempotency-Key as the run. Reading never collects the website again."
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Examples",
+      "description": "Ready-to-run calls with saved responses (3 records each, recorded 2026-11-24).",
+      "item": [
+        {
+          "name": "RubyGems: most downloaded gems for \"rails\"",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// One Idempotency-Key per run. Read /result with the same key; send the POST again only with a new key.",
+                  "pm.collectionVariables.set('idempotency_key', pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('run answered', () => pm.expect([200, 202]).to.include(pm.response.code));",
+                  "if (pm.response.code === 200) { pm.test('records returned', () => pm.expect(pm.response.json().records).to.be.an('array')); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotency_key}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"input\": {\n    \"search\": \"rails\",\n    \"sort\": \"downloads\"\n  },\n  \"max_items\": 3,\n  \"wait_seconds\": 90\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{api_base}}/v1/catalog/public/apis/generated_b448cdefdbf826fea8b06011/endpoints/generated_b448cdefdbf826fea8b06011_search/run",
+              "host": [
+                "{{api_base}}"
+              ],
+              "path": [
+                "v1",
+                "catalog",
+                "public",
+                "apis",
+                "generated_b448cdefdbf826fea8b06011",
+                "endpoints",
+                "generated_b448cdefdbf826fea8b06011_search",
+                "run"
+              ]
+            },
+            "description": "[RubyGems Gem Search](https://cleanedweb.com/catalog/?utm_source=postman&utm_medium=public-workspace): gem name, summary, total downloads, link."
+          },
+          "response": [
+            {
+              "name": "200 \u2013 3 records",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "{{idempotency_key}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"input\": {\n    \"search\": \"rails\",\n    \"sort\": \"downloads\"\n  },\n  \"max_items\": 3,\n  \"wait_seconds\": 90\n}"
+                },
+                "url": {
+                  "raw": "{{api_base}}/v1/catalog/public/apis/generated_b448cdefdbf826fea8b06011/endpoints/generated_b448cdefdbf826fea8b06011_search/run",
+                  "host": [
+                    "{{api_base}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "catalog",
+                    "public",
+                    "apis",
+                    "generated_b448cdefdbf826fea8b06011",
+                    "endpoints",
+                    "generated_b448cdefdbf826fea8b06011_search",
+                    "run"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"records\": [\n    {\n      \"description\": \"A toolkit of support libraries and Ruby core extensions extracted from the Rails framew...\",\n      \"title\": \"activesupport\",\n      \"total_downloads\": 1487289457,\n      \"url\": \"https://rubygems.org/gems/activesupport\"\n    },\n    {\n      \"description\": \"A toolkit for building modeling frameworks (part of Rails).\",\n      \"title\": \"activemodel\",\n      \"total_downloads\": 929520915,\n      \"url\": \"https://rubygems.org/gems/activemodel\"\n    },\n    {\n      \"description\": \"Object-relational mapper framework (part of Rails).\",\n      \"title\": \"activerecord\",\n      \"total_downloads\": 873092286,\n      \"url\": \"https://rubygems.org/gems/activerecord\"\n    }\n  ],\n  \"summary\": {\n    \"limits\": {\n      \"max_pages\": null,\n      \"max_records\": null,\n      \"detail_limit\": 0\n    },\n    \"catalog_complete\": false,\n    \"source_id\": \"generated_b448cdefdbf826fea8b06011\",\n    \"definition_version\": \"025f9514194b9c77351198b61ef7257ce0e04ab02de3d8f015bc06f8366e9e7e\",\n    \"records\": 3,\n    \"within_scope_passed\": true,\n    \"status\": \"bounded\",\n    \"model_calls\": 0,\n    \"details_selected\": 0,\n    \"details_complete\": 0,\n    \"details_not_selected\": 3\n  },\n  \"metadata\": {\n    \"source_id\": \"generated_b448cdefdbf826fea8b06011\",\n    \"definition_version\": \"025f9514194b9c77351198b61ef7257ce0e04ab02de3d8f015bc06f8366e9e7e\",\n    \"model_calls\": 0\n  },\n  \"artifacts\": [],\n  \"traceId\": null,\n  \"run\": {\n    \"run_id\": \"b34052d1cabe451492f8e30633811895\",\n    \"surface\": \"rest_run\",\n    \"source_id\": \"generated_b448cdefdbf826fea8b06011\",\n    \"definition_version\": \"025f9514194b9c77351198b61ef7257ce0e04ab02de3d8f015bc06f8366e9e7e\",\n    \"status\": \"finished\",\n    \"stop_reason\": \"max_items\",\n    \"created_at\": \"2026-11-24T06:24:47.562420+00:00\",\n    \"started_at\": \"2026-11-24T06:24:48.523345+00:00\",\n    \"finished_at\": \"2026-11-24T06:24:51.194441+00:00\",\n    \"limits\": {\n      \"max_items\": 3,\n      \"timeout_seconds\": 10800\n    },\n    \"input\": {\n      \"sort\": \"downloads\",\n      \"search\": \"rails\"\n    },\n    \"progress\": {\n      \"pages\": 1,\n      \"commits\": 1,\n      \"items\": 3,\n      \"duplicates\": 0\n    },\n    \"units_charged\": 3,\n    \"abort_requested\": false,\n    \"links\": {\n      \"self\": \"/v1/runs/b34052d1cabe451492f8e30633811895\",\n      \"items\": \"/v1/runs/b34052d1cabe451492f8e30633811895/items\",\n      \"result\": \"/v1/runs/b34052d1cabe451492f8e30633811895/result\",\n      \"abort\": \"/v1/runs/b34052d1cabe451492f8e30633811895/abort\"\n    }\n  },\n  \"delivery\": {\n    \"runId\": \"b34052d1cabe451492f8e30633811895\",\n    \"chargeReceiptId\": \"b34052d1cabe451492f8e30633811895\",\n    \"recordCount\": 3\n  },\n  \"version\": \"1.0\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "GitHub: most-starred repositories for a topic",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// One Idempotency-Key per run. Read /result with the same key; send the POST again only with a new key.",
+                  "pm.collectionVariables.set('idempotency_key', pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('run answered', () => pm.expect([200, 202]).to.include(pm.response.code));",
+                  "if (pm.response.code === 200) { pm.test('records returned', () => pm.expect(pm.response.json().records).to.be.an('array')); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotency_key}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"input\": {\n    \"topics\": \"llm\",\n    \"sort\": \"desc_stars\"\n  },\n  \"max_items\": 3,\n  \"wait_seconds\": 90\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{api_base}}/v1/catalog/public/apis/generated_047a8ebb25911ccf62f4a212/endpoints/generated_047a8ebb25911ccf62f4a212_search/run",
+              "host": [
+                "{{api_base}}"
+              ],
+              "path": [
+                "v1",
+                "catalog",
+                "public",
+                "apis",
+                "generated_047a8ebb25911ccf62f4a212",
+                "endpoints",
+                "generated_047a8ebb25911ccf62f4a212_search",
+                "run"
+              ]
+            },
+            "description": "GitHub Topic Repositories: repositories under a topic with description, language, topics and owner; `sort` by stars, forks or updated."
+          },
+          "response": [
+            {
+              "name": "200 \u2013 3 records",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "{{idempotency_key}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"input\": {\n    \"topics\": \"llm\",\n    \"sort\": \"desc_stars\"\n  },\n  \"max_items\": 3,\n  \"wait_seconds\": 90\n}"
+                },
+                "url": {
+                  "raw": "{{api_base}}/v1/catalog/public/apis/generated_047a8ebb25911ccf62f4a212/endpoints/generated_047a8ebb25911ccf62f4a212_search/run",
+                  "host": [
+                    "{{api_base}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "catalog",
+                    "public",
+                    "apis",
+                    "generated_047a8ebb25911ccf62f4a212",
+                    "endpoints",
+                    "generated_047a8ebb25911ccf62f4a212_search",
+                    "run"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"records\": [\n    {\n      \"description\": \"The agent harness performance optimization system. Skills, instincts, memory, security, and research-first development for Claude Code, Codex, Opencode, Cursor and beyond.\",\n      \"programming_language\": \"JavaScript\",\n      \"related_title\": \"affaan-m\",\n      \"related_url\": \"https://github.com/affaan-m\",\n      \"slug\": \"affaan-m/ECC\",\n      \"title\": \"ECC\",\n      \"topics\": [\n        \"productivity\",\n        \"mcp\",\n        \"developer-tools\",\n        \"ai-agents\",\n        \"claude\",\n        \"llm\",\n        \"anthropic\",\n        \"claude-code\"\n      ],\n      \"url\": \"https://github.com/affaan-m/ECC\",\n      \"activity_path\": \"/affaan-m/ECC/activity\",\n      \"can_fork\": \"false\",\n      \"can_open_stargazers_and_watchers\": \"false\",\n      \"can_star\": \"false\",\n      \"can_watch\": \"false\",\n      \"contributors\": \"true\",\n      \"cta\": \"false\",\n      \"deployments\": \"false\",\n      \"detail_description\": \"The agent harness performance optimization system. Skills, instincts, memory, security, and research-first development for Claude Code, Codex, Opencode, Cursor and beyond.\",\n      \"emu_contribution_blocked\": \"false\",\n      \"fork_network_path\": \"/affaan-m/ECC/forks\",\n      \"forkability_error\": \"not_logged_in\",\n      \"forks_count\": \"45551\",\n      \"formatted_description\": \"The agent harness performance optimization system. Skills, instincts, memory, security, and research-first development for Claude Code, Codex, Opencode, Cursor and beyond.\",\n      \"has_citation\": \"false\",\n      \"is_advisory_workspace\": \"false\",\n      \"is_archived\": \"false\",\n      \"is_fork\": \"false\",\n      \"is_mirror\": \"false\",\n      \"is_org\": \"false\",\n      \"is_org_owned\": \"false\",\n      \"is_pinned\": \"true\",\n      \"is_private\": \"false\",\n      \"is_template\": \"false\",\n      \"languages\": \"true\",\n      \"owner_avatar_url\": \"https://avatars.githubusercontent.com/u/124439313?s=60&v=4\",\n      \"owner_login\": \"affaan-m\",\n      \"packages\": \"true\",\n      \"pin_items_remaining\": \"0\",\n      \"readme_content\": \"Language: English | \\u0627\\u0644\\u0639\\u0631\\u0628\\u064a\\u0629 | Portugu\\u00eas (Brasil) | \\u7b80\\u4f53\\u4e2d\\u6587 | \\u7e41\\u9ad4\\u4e2d\\u6587 | \\u65e5\\u672c\\u8a9e | \\ud55c\\uad6d\\uc5b4 | T\\u00fcrk\\u00e7e | \\u0420\\u0443\\u0441\\u0441\\u043a\\u0438\\u0439 | Ti\\u1ebfng Vi\\u1ec7t | \\u0e44\\u0e17\\u0e22 | Deutsch | Espa\\u00f1ol | \\u0423\\u043a\\u0440\\u0430\\u0457\\u043d\\u0441\\u044c\\u043a\\u0430 | Polski | \\u09ac\\u09be\\u0982\\u09b2\\u09be | Italiano Warning Official sources only. Install ECC only from verified channels: the GitHub repository github.com/affaan-m/ECC, the npm\\u2026 (shortened in this saved example)\",\n      \"report_path\": \"/contact/report-content?content_url=https%3A%2F%2Fgithub.com%2Faffaan-m%2FECC&report=affaan-m+%28user%29\",\n      \"repository_id\": \"1136590548\",\n      \"repository_name\": \"affaan-m/ECC\",\n      \"show_demo_notification\": \"false\",\n      \"show_insights\": \"true\",\n      \"show_label_subscriptions\": \"false\",\n      \"show_sponsor_button\": \"true\",\n      \"show_template_button\": \"false\",\n      \"sponsors\": \"true\",\n      \"stargazer_count\": \"309705\",\n      \"stargazers_path\": \"/affaan-m/ECC/stargazers\",\n      \"subscription_type\": \"none\",\n      \"suggested_workflows\": \"false\",\n      \"topics_name\": \"ai-agents, anthropic, claude, claude-code, developer-tools, llm, mcp, productivity\",\n      \"used_by\": \"true\",\n      \"visibility\": \"Public\",\n      \"visibility_label\": \"Public\",\n      \"watch_watch_data_subscribable_thread_types_name\": \"Issue, PullRequest, Release, Discussion, SecurityAlert\",\n      \"watcher_count\": \"1522\",\n      \"watchers_count\": \"1522\",\n      \"watchers_path\": \"/affaan-m/ECC/watchers\",\n      \"typed_forks_count\": 45551,\n      \"typed_stargazer_count\": 309705,\n      \"typed_watcher_count\": 1522,\n      \"typed_watchers_count\": 1522\n    },\n    {\n      \"description\": \"The agent that grows with you\",\n      \"programming_language\": \"Python\",\n      \"related_title\": \"NousResearch\",\n      \"related_url\": \"https://github.com/NousResearch\",\n      \"slug\": \"NousResearch/hermes-agent\",\n      \"title\": \"hermes-agent\",\n      \"topics\": [\n        \"ai\",\n        \"openai\",\n        \"hermes\",\n        \"codex\",\n        \"ai-agents\",\n        \"claude\",\n        \"ai-agent\",\n        \"llm\",\n        \"chatgpt\",\n        \"anthropic\",\n        \"claude-code\",\n        \"hermes-agent\",\n        \"nous-research\"\n      ],\n      \"url\": \"https://github.com/NousResearch/hermes-agent\",\n      \"activity_path\": \"/NousResearch/hermes-agent/activity\",\n      \"can_fork\": \"false\",\n      \"can_open_stargazers_and_watchers\": \"false\",\n      \"can_star\": \"false\",\n      \"can_watch\": \"false\",\n      \"contributors\": \"true\",\n      \"cta\": \"false\",\n      \"deployments\": \"false\",\n      \"detail_description\": \"The agent that grows with you\",\n      \"emu_contribution_blocked\": \"false\",\n      \"fork_network_path\": \"/NousResearch/hermes-agent/forks\",\n      \"forkability_error\": \"not_logged_in\",\n      \"forks_count\": \"60141\",\n      \"formatted_description\": \"The agent that grows with you\",\n      \"has_citation\": \"false\",\n      \"is_advisory_workspace\": \"false\",\n      \"is_archived\": \"false\",\n      \"is_fork\": \"false\",\n      \"is_mirror\": \"false\",\n      \"is_org\": \"true\",\n      \"is_org_owned\": \"true\",\n      \"is_pinned\": \"false\",\n      \"is_private\": \"false\",\n      \"is_template\": \"false\",\n      \"languages\": \"true\",\n      \"owner_avatar_url\": \"https://avatars.githubusercontent.com/u/134168893?s=60&v=4\",\n      \"owner_login\": \"NousResearch\",\n      \"packages\": \"true\",\n      \"pin_items_remaining\": \"6\",\n      \"readme_content\": \"Hermes Agent \\u2624 Hermes Agent | Hermes Desktop The self-improving AI agent built by Nous Research. It's the only agent with a built-in learning loop \\u2014 it creates skills from experience, improves them during use, nudges itself to persist knowledge, searches its own past conversations, and builds a deep\\u2026 (shortened in this saved example)\",\n      \"report_path\": \"/contact/report-content?content_url=https%3A%2F%2Fgithub.com%2FNousResearch%2Fhermes-agent&report=NousResearch+%28user%29\",\n      \"repository_id\": \"1024554267\",\n      \"repository_name\": \"NousResearch/hermes-agent\",\n      \"show_demo_notification\": \"false\",\n      \"show_insights\": \"true\",\n      \"show_label_subscriptions\": \"false\",\n      \"show_sponsor_button\": \"false\",\n      \"show_template_button\": \"false\",\n      \"sponsors\": \"false\",\n      \"stargazer_count\": \"265716\",\n      \"stargazers_path\": \"/NousResearch/hermes-agent/stargazers\",\n      \"subscription_type\": \"none\",\n      \"suggested_workflows\": \"false\",\n      \"topics_name\": \"ai, ai-agent, ai-agents, anthropic, chatgpt, claude, claude-code, codex, hermes, hermes-agent, llm, nous-research, openai\",\n      \"used_by\": \"true\",\n      \"visibility\": \"Public\",\n      \"visibility_label\": \"Public\",\n      \"watch_watch_data_subscribable_thread_types_name\": \"Issue, PullRequest, Release, Discussion, SecurityAlert\",\n      \"watcher_count\": \"1015\",\n      \"watchers_count\": \"1015\",\n      \"watchers_path\": \"/NousResearch/hermes-agent/watchers\",\n      \"typed_forks_count\": 60141,\n      \"typed_stargazer_count\": 265716,\n      \"typed_watcher_count\": 1015,\n      \"typed_watchers_count\": 1015\n    },\n    {\n      \"description\": \"Knowledge infrastructure to make your agents smarter. Search, scrape and access 550+ data providers through one API.\",\n      \"programming_language\": \"TypeScript\",\n      \"related_title\": \"firecrawl\",\n      \"related_url\": \"https://github.com/firecrawl\",\n      \"slug\": \"firecrawl/firecrawl\",\n      \"title\": \"firecrawl\",\n      \"topics\": [\n        \"markdown\",\n        \"crawler\",\n        \"scraper\",\n        \"ai\",\n        \"html-to-markdown\",\n        \"web-crawler\",\n        \"scraping\",\n        \"web-scraper\",\n        \"web-scraping\",\n        \"data-extraction\",\n        \"webscraping\",\n        \"web-data-extraction\",\n        \"ai-agents\",\n        \"web-search\",\n        \"ai-search\",\n        \"web-data\",\n        \"llm\",\n        \"ai-crawler\",\n        \"ai-scraping\"\n      ],\n      \"url\": \"https://github.com/firecrawl/firecrawl\",\n      \"activity_path\": \"/firecrawl/firecrawl/activity\",\n      \"can_fork\": \"false\",\n      \"can_open_stargazers_and_watchers\": \"false\",\n      \"can_star\": \"false\",\n      \"can_watch\": \"false\",\n      \"contributors\": \"true\",\n      \"cta\": \"false\",\n      \"deployments\": \"false\",\n      \"detail_description\": \"Knowledge infrastructure to make your agents smarter. Search, scrape and access 550+ data providers through one API.\",\n      \"emu_contribution_blocked\": \"false\",\n      \"fork_network_path\": \"/firecrawl/firecrawl/forks\",\n      \"forkability_error\": \"not_logged_in\",\n      \"forks_count\": \"10875\",\n      \"formatted_description\": \"Knowledge infrastructure to make your agents smarter. Search, scrape and access 550+ data providers through one API.\",\n      \"has_citation\": \"false\",\n      \"is_advisory_workspace\": \"false\",\n      \"is_archived\": \"false\",\n      \"is_fork\": \"false\",\n      \"is_mirror\": \"false\",\n      \"is_org\": \"true\",\n      \"is_org_owned\": \"true\",\n      \"is_pinned\": \"true\",\n      \"is_private\": \"false\",\n      \"is_template\": \"false\",\n      \"languages\": \"true\",\n      \"owner_avatar_url\": \"https://avatars.githubusercontent.com/u/135057108?s=60&v=4\",\n      \"owner_login\": \"firecrawl\",\n      \"packages\": \"true\",\n      \"pin_items_remaining\": \"0\",\n      \"readme_content\": \"\\ud83d\\udd25 Firecrawl Knowledge infrastructure to make your agents smarter. \\ud83d\\udd25 You can use Firecrawl three ways. This repo holds the code for Firecrawl Local and the self-hosted server, along with SDKs that work with all three. Firecrawl Local. Run Firecrawl on your own machine as one binary that turns website\\u2026 (shortened in this saved example)\",\n      \"report_path\": \"/contact/report-content?content_url=https%3A%2F%2Fgithub.com%2Ffirecrawl%2Ffirecrawl&report=firecrawl+%28user%29\",\n      \"repository_id\": \"787076358\",\n      \"repository_name\": \"firecrawl/firecrawl\",\n      \"show_demo_notification\": \"false\",\n      \"show_insights\": \"true\",\n      \"show_label_subscriptions\": \"false\",\n      \"show_sponsor_button\": \"false\",\n      \"show_template_button\": \"false\",\n      \"sponsors\": \"false\",\n      \"stargazer_count\": \"208140\",\n      \"stargazers_path\": \"/firecrawl/firecrawl/stargazers\",\n      \"subscription_type\": \"none\",\n      \"suggested_workflows\": \"false\",\n      \"topics_name\": \"ai, ai-agents, ai-crawler, ai-scraping, ai-search, crawler, data-extraction, html-to-markdown, llm, markdown, scraper, scraping, web-crawler, web-data, web-data-extraction, web-scraper, web-scraping, web-search, webscraping\",\n      \"used_by\": \"true\",\n      \"visibility\": \"Public\",\n      \"visibility_label\": \"Public\",\n      \"watch_watch_data_subscribable_thread_types_name\": \"Issue, PullRequest, Release, Discussion, SecurityAlert\",\n      \"watcher_count\": \"511\",\n      \"watchers_count\": \"511\",\n      \"watchers_path\": \"/firecrawl/firecrawl/watchers\",\n      \"typed_forks_count\": 10875,\n      \"typed_stargazer_count\": 208140,\n      \"typed_watcher_count\": 511,\n      \"typed_watchers_count\": 511\n    }\n  ],\n  \"summary\": {\n    \"records\": 3,\n    \"linked_details\": {\n      \"failures\": {},\n      \"detail_plan_sha256\": \"25a61eb09befc60abb9bd0581ae9601e0ecf97b3f837c8be0276ad46582bc464\",\n      \"detail_receipt_version\": 2\n    },\n    \"detail_failures\": {},\n    \"detail_receipts\": [\n      {\n        \"url\": \"https://github.com/affaan-m/ECC\",\n        \"status\": \"complete\",\n        \"html_sha256\": \"4557ef1ff03f34a0be52d3479581133a49650523e7d895a8c60f126186606de0\"\n      },\n      {\n        \"url\": \"https://github.com/NousResearch/hermes-agent\",\n        \"status\": \"complete\",\n        \"html_sha256\": \"48f5f3a45a752e447ae80dc7a0904d1bcdffb8c40f8d895bf4609e2279bcdb28\"\n      },\n      {\n        \"url\": \"https://github.com/firecrawl/firecrawl\",\n        \"status\": \"complete\",\n        \"html_sha256\": \"28980121874b60db3daebb7af935690245cf84f61729a7884c13a82767e86028\"\n      }\n    ],\n    \"details_complete\": 3,\n    \"details_selected\": 3,\n    \"record_enrichment\": {\n      \"reason\": null,\n      \"requested\": true,\n      \"detail_reads\": 3,\n      \"detail_ceiling\": null,\n      \"records_enriched\": 3,\n      \"records_not_enriched\": 0,\n      \"detail_reads_incomplete\": 0\n    },\n    \"detail_plan_sha256\": \"25a61eb09befc60abb9bd0581ae9601e0ecf97b3f837c8be0276ad46582bc464\",\n    \"details_not_selected\": 0,\n    \"detail_receipt_version\": 2,\n    \"limits\": {\n      \"max_pages\": null,\n      \"max_records\": null,\n      \"detail_limit\": null\n    },\n    \"catalog_complete\": false,\n    \"source_id\": \"generated_047a8ebb25911ccf62f4a212\",\n    \"definition_version\": \"eec683b95f337dcc63a3fb5bf1e23729fb71f6f719f51ea771c19345b5893252\",\n    \"within_scope_passed\": true,\n    \"status\": \"bounded\",\n    \"model_calls\": 0\n  },\n  \"metadata\": {\n    \"source_id\": \"generated_047a8ebb25911ccf62f4a212\",\n    \"definition_version\": \"eec683b95f337dcc63a3fb5bf1e23729fb71f6f719f51ea771c19345b5893252\",\n    \"model_calls\": 0\n  },\n  \"artifacts\": [],\n  \"traceId\": null,\n  \"run\": {\n    \"run_id\": \"2622ed9bb1524aab9c09e7c7a7a36aee\",\n    \"surface\": \"rest_run\",\n    \"source_id\": \"generated_047a8ebb25911ccf62f4a212\",\n    \"definition_version\": \"eec683b95f337dcc63a3fb5bf1e23729fb71f6f719f51ea771c19345b5893252\",\n    \"status\": \"finished\",\n    \"stop_reason\": \"max_items\",\n    \"created_at\": \"2026-11-24T06:24:52.975026+00:00\",\n    \"started_at\": \"2026-11-24T06:24:53.595134+00:00\",\n    \"finished_at\": \"2026-11-24T06:24:58.805495+00:00\",\n    \"limits\": {\n      \"max_items\": 3,\n      \"timeout_seconds\": 10800\n    },\n    \"input\": {\n      \"sort\": \"desc_stars\",\n      \"topics\": \"llm\"\n    },\n    \"progress\": {\n      \"pages\": 1,\n      \"commits\": 1,\n      \"items\": 3,\n      \"duplicates\": 0\n    },\n    \"units_charged\": 3,\n    \"abort_requested\": false,\n    \"links\": {\n      \"self\": \"/v1/runs/2622ed9bb1524aab9c09e7c7a7a36aee\",\n      \"items\": \"/v1/runs/2622ed9bb1524aab9c09e7c7a7a36aee/items\",\n      \"result\": \"/v1/runs/2622ed9bb1524aab9c09e7c7a7a36aee/result\",\n      \"abort\": \"/v1/runs/2622ed9bb1524aab9c09e7c7a7a36aee/abort\"\n    }\n  },\n  \"delivery\": {\n    \"runId\": \"2622ed9bb1524aab9c09e7c7a7a36aee\",\n    \"chargeReceiptId\": \"2622ed9bb1524aab9c09e7c7a7a36aee\",\n    \"recordCount\": 3\n  },\n  \"version\": \"1.1\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Steam: top-reviewed games for a search",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// One Idempotency-Key per run. Read /result with the same key; send the POST again only with a new key.",
+                  "pm.collectionVariables.set('idempotency_key', pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('run answered', () => pm.expect([200, 202]).to.include(pm.response.code));",
+                  "if (pm.response.code === 200) { pm.test('records returned', () => pm.expect(pm.response.json().records).to.be.an('array')); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotency_key}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"input\": {\n    \"search\": \"roguelike\",\n    \"sort_by\": \"Reviews_DESC\"\n  },\n  \"max_items\": 3,\n  \"wait_seconds\": 90\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{api_base}}/v1/catalog/public/apis/generated_4680f86bfc8235600b5cb151/endpoints/generated_4680f86bfc8235600b5cb151_search/run",
+              "host": [
+                "{{api_base}}"
+              ],
+              "path": [
+                "v1",
+                "catalog",
+                "public",
+                "apis",
+                "generated_4680f86bfc8235600b5cb151",
+                "endpoints",
+                "generated_4680f86bfc8235600b5cb151_search",
+                "run"
+              ]
+            },
+            "description": "Steam Game Search: store search results with price, discount, release date, tags and review summary; filters for OS, language, price and Deck compatibility."
+          },
+          "response": [
+            {
+              "name": "200 \u2013 3 records",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "{{idempotency_key}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"input\": {\n    \"search\": \"roguelike\",\n    \"sort_by\": \"Reviews_DESC\"\n  },\n  \"max_items\": 3,\n  \"wait_seconds\": 90\n}"
+                },
+                "url": {
+                  "raw": "{{api_base}}/v1/catalog/public/apis/generated_4680f86bfc8235600b5cb151/endpoints/generated_4680f86bfc8235600b5cb151_search/run",
+                  "host": [
+                    "{{api_base}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "catalog",
+                    "public",
+                    "apis",
+                    "generated_4680f86bfc8235600b5cb151",
+                    "endpoints",
+                    "generated_4680f86bfc8235600b5cb151_search",
+                    "run"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"records\": [\n    {\n      \"bundlediscount\": 0,\n      \"discount\": 0,\n      \"discount_final_price\": \"$4.99\",\n      \"ds_appid\": \"1794680\",\n      \"ds_crtrids\": [\n        44992428\n      ],\n      \"ds_itemkey\": \"App_1794680\",\n      \"ds_steam_deck_compat_handled\": true,\n      \"ds_tagids\": [\n        42804,\n        4885,\n        3959,\n        3964,\n        12686,\n        3871,\n        492\n      ],\n      \"image\": \"https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1794680/6f2de6d6936990a96ab082be0b89136d137df13e/capsule_231x87.jpg?t=1794307910\",\n      \"platforms\": [\n        \"win\",\n        \"mac\"\n      ],\n      \"price_final\": 4.99,\n      \"release_date\": \"2022-10-20\",\n      \"search_review_summary\": \"positive\",\n      \"title\": \"Vampire Survivors\",\n      \"tooltip_html\": \"Overwhelmingly Positive<br>98% of the 128,833 user reviews for this game are positive.<br><br>The review score for this product is calculated from reviews written in your language based on your preferences.\",\n      \"url\": \"https://store.steampowered.com/app/1794680/Vampire_Survivors/?snr=1_7_7_7000_150_1\",\n      \"typed_discount_final_price\": 4.99\n    },\n    {\n      \"bundlediscount\": 0,\n      \"discount\": 0,\n      \"discount_final_price\": \"$16.99\",\n      \"ds_appid\": \"3195790\",\n      \"ds_crtrids\": [\n        40206065\n      ],\n      \"ds_descids\": [\n        2,\n        5\n      ],\n      \"ds_itemkey\": \"App_3195790\",\n      \"ds_steam_deck_compat_handled\": true,\n      \"ds_tagids\": [\n        493,\n        4036,\n        1667,\n        3839,\n        1716,\n        5395,\n        1625\n      ],\n      \"image\": \"https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3195790/1be6d3187d7f5205243c1f7172354db4d219f4a6/capsule_231x87.jpg?t=1795461736\",\n      \"platforms\": [\n        \"win\"\n      ],\n      \"price_final\": 16.99,\n      \"release_date\": \"2025-04-17\",\n      \"search_review_summary\": \"positive\",\n      \"title\": \"White Knuckle\",\n      \"tooltip_html\": \"Overwhelmingly Positive<br>98% of the 10,960 user reviews for this game are positive.<br><br>The review score for this product is calculated from reviews written in your language based on your preferences.\",\n      \"url\": \"https://store.steampowered.com/app/3195790/White_Knuckle/?snr=1_7_7_7000_150_2\",\n      \"typed_discount_final_price\": 16.99\n    },\n    {\n      \"bundlediscount\": 0,\n      \"discount\": 0,\n      \"discount_final_price\": \"$4.99\",\n      \"ds_appid\": \"2088840\",\n      \"ds_crtrids\": [\n        34486216\n      ],\n      \"ds_itemkey\": \"App_2088840\",\n      \"ds_steam_deck_compat_handled\": true,\n      \"ds_tagids\": [\n        723991,\n        4885,\n        42804,\n        1714,\n        4305,\n        4637,\n        1742\n      ],\n      \"image\": \"https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2088840/capsule_231x87.jpg?t=1791835894\",\n      \"platforms\": [\n        \"win\"\n      ],\n      \"price_final\": 4.99,\n      \"release_date\": \"2023-12-04\",\n      \"search_review_summary\": \"positive\",\n      \"title\": \"Picayune Dreams\",\n      \"tooltip_html\": \"Overwhelmingly Positive<br>98% of the 3,595 user reviews for this game are positive.<br><br>The review score for this product is calculated from reviews written in your language based on your preferences.\",\n      \"url\": \"https://store.steampowered.com/app/2088840/Picayune_Dreams/?snr=1_7_7_7000_150_3\",\n      \"typed_discount_final_price\": 4.99\n    }\n  ],\n  \"summary\": {\n    \"limits\": {\n      \"max_pages\": null,\n      \"max_records\": null,\n      \"detail_limit\": 0\n    },\n    \"catalog_complete\": false,\n    \"source_id\": \"generated_4680f86bfc8235600b5cb151\",\n    \"definition_version\": \"65d6b32d0b47aa867a4c67cbaf26ff62ab4deda4bdf11503f95fdea15e68308c\",\n    \"records\": 3,\n    \"within_scope_passed\": true,\n    \"status\": \"bounded\",\n    \"model_calls\": 0,\n    \"details_selected\": 0,\n    \"details_complete\": 0,\n    \"details_not_selected\": 3\n  },\n  \"metadata\": {\n    \"source_id\": \"generated_4680f86bfc8235600b5cb151\",\n    \"definition_version\": \"65d6b32d0b47aa867a4c67cbaf26ff62ab4deda4bdf11503f95fdea15e68308c\",\n    \"model_calls\": 0\n  },\n  \"artifacts\": [],\n  \"traceId\": null,\n  \"run\": {\n    \"run_id\": \"18e9c5c043f04856be1b0866913594b9\",\n    \"surface\": \"rest_run\",\n    \"source_id\": \"generated_4680f86bfc8235600b5cb151\",\n    \"definition_version\": \"65d6b32d0b47aa867a4c67cbaf26ff62ab4deda4bdf11503f95fdea15e68308c\",\n    \"status\": \"finished\",\n    \"stop_reason\": \"max_items\",\n    \"created_at\": \"2026-11-24T06:25:01.538037+00:00\",\n    \"started_at\": \"2026-11-24T06:25:03.142832+00:00\",\n    \"finished_at\": \"2026-11-24T06:25:06.470351+00:00\",\n    \"limits\": {\n      \"max_items\": 3,\n      \"timeout_seconds\": 10800\n    },\n    \"input\": {\n      \"search\": \"roguelike\",\n      \"sort_by\": \"Reviews_DESC\"\n    },\n    \"progress\": {\n      \"pages\": 1,\n      \"commits\": 1,\n      \"items\": 3,\n      \"duplicates\": 0\n    },\n    \"units_charged\": 3,\n    \"abort_requested\": false,\n    \"links\": {\n      \"self\": \"/v1/runs/18e9c5c043f04856be1b0866913594b9\",\n      \"items\": \"/v1/runs/18e9c5c043f04856be1b0866913594b9/items\",\n      \"result\": \"/v1/runs/18e9c5c043f04856be1b0866913594b9/result\",\n      \"abort\": \"/v1/runs/18e9c5c043f04856be1b0866913594b9/abort\"\n    }\n  },\n  \"delivery\": {\n    \"runId\": \"18e9c5c043f04856be1b0866913594b9\",\n    \"chargeReceiptId\": \"18e9c5c043f04856be1b0866913594b9\",\n    \"recordCount\": 3\n  },\n  \"version\": \"3.0\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
