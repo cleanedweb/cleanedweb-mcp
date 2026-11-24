@@ -1,6 +1,6 @@
 <p align="center"><img src="assets/logo-400.png" width="96" alt="CleanedWeb"></p>
 
-# CleanedWeb MCP server
+# CleanedWeb MCP server 
 
 Give an AI agent structured records from public websites. CleanedWeb turns website collections
 (listings, products, jobs, articles, profiles) into maintained REST APIs. This MCP server lets an
