@@ -139,6 +139,19 @@ Then sign in from Gemini CLI with `/mcp auth cleanedweb`; until then `/mcp` list
 }
 ```
 
+**Kiro:** [![Add to Kiro](https://kiro.dev/images/add-to-kiro.svg)](https://kiro.dev/launch/mcp/add?name=cleanedweb&config=%7B%22url%22%3A%22https%3A%2F%2Fapi.cleanedweb.com%2Fmcp%3Fprofile%3Dcatalog%22%2C%22disabled%22%3Afalse%2C%22autoApprove%22%3A%5B%5D%7D)
+or add it to `~/.kiro/settings/mcp.json` (or `.kiro/settings/mcp.json` in a workspace):
+
+```json
+{
+  "mcpServers": {
+    "cleanedweb": { "url": "https://api.cleanedweb.com/mcp?profile=catalog" }
+  }
+}
+```
+
+After saving, Kiro shows an Authenticate prompt; sign in to CleanedWeb there.
+
 **Cline and other clients:** add a remote (Streamable HTTP) server with the URL above. See
 [llms-install.md](llms-install.md).
 
