@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "cleanedweb-mcp"
-version = "1.0.0"
+version = "1.0.1"
 description = "Local stdio MCP server for CleanedWeb: forwards every request to the hosted server, so an agent can find and run maintained REST APIs that return structured records from public websites."
 readme = "README.md"
 license = "MIT"
@@ -17,7 +17,7 @@ classifiers = [
   "Operating System :: OS Independent",
   "Topic :: Software Development :: Libraries",
 ]
-dependencies = ["mcp>=1.27,<2"]
+dependencies = ["mcp>=1.27,<3"]
 
 [project.urls]
 Homepage = "https://cleanedweb.com/docs/mcp/"

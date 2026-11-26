@@ -28,6 +28,7 @@ class FakeUpstream:
     def __init__(self) -> None:
         self.seen: list[dict] = []
         self.fail_calls_with: int | None = None
+        self.fail_initialize_with: int | None = None
         fake = self
 
         class Handler(BaseHTTPRequestHandler):
@@ -73,7 +74,9 @@ class FakeUpstream:
                     self._json(200, {"jsonrpc": "2.0", "id": msg["id"], "error": {"code": code, "message": message}})
 
                 method = msg["method"]
-                if method == "initialize":
+                if method == "initialize" and fake.fail_initialize_with:
+                    self._json(fake.fail_initialize_with, {"error": "unauthorized"})
+                elif method == "initialize":
                     reply(
                         {
                             "protocolVersion": "2025-06-18",

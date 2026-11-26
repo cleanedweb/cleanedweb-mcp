@@ -12,13 +12,12 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 import anyio
-import httpx
 import mcp.types as types
 from mcp import ClientSession
 from mcp.client.streamable_http import streamable_http_client
 from mcp.server.lowlevel import Server
-from mcp.shared.exceptions import McpError
 
+from ._compat import MCP_MAJOR, McpError, client_request, httpx, mcp_error, server_result
 from .config import Config
 
 log = logging.getLogger("cleanedweb_mcp")
@@ -31,7 +30,9 @@ NEEDS_KEY = (
 
 def _is_auth_error(err: BaseException) -> bool:
     for e in _leaves(err):
-        if isinstance(e, httpx.HTTPStatusError) and e.response.status_code in (401, 403):
+        if isinstance(e, UpstreamAuthError) or (
+            isinstance(e, httpx.HTTPStatusError) and e.response.status_code in (401, 403)
+        ):
             return True
         if "401" in str(e) or "403" in str(e) or "unauthorized" in str(e).lower():
             return True
@@ -59,6 +60,14 @@ class _Connection:
         self.dead = anyio.Event()
         self.stop = anyio.Event()
         self.error: BaseException | None = None
+        # Last 401/403 the hosted server answered. mcp 2.x turns an HTTP error status into a generic
+        # JSON-RPC error and keeps the connection, so the status is only visible here.
+        self.auth_status: int | None = None
+
+
+class UpstreamAuthError(ConnectionError):
+    def __init__(self, status: int) -> None:
+        super().__init__(f"the hosted server answered HTTP {status}")
 
 
 class Upstream:
@@ -83,18 +92,19 @@ class Upstream:
                 raise conn.error
             return conn
 
-    async def request(self, request: types.ClientRequest, result_type: type):
-        """Send one request upstream. Raises McpError for an upstream JSON-RPC error, any other
+    async def request(self, request, result_type: type):
+        """Send one request upstream. Raises McpError (MCPError on mcp 2.x) for an upstream JSON-RPC error, any other
         exception when the connection fails (the transport dies on an HTTP error status, and
         pending requests would otherwise wait forever)."""
         conn = await self._connection()
         session = conn.session
         assert session is not None
         outcome: list = []
+        conn.auth_status = None
 
         async def send(scope: anyio.CancelScope) -> None:
             try:
-                outcome.append((True, await session.send_request(request, result_type)))
+                outcome.append((True, await session.send_request(client_request(request), result_type)))
             except Exception as err:  # noqa: BLE001 - re-raised below
                 outcome.append((False, err))
             scope.cancel()
@@ -110,6 +120,8 @@ class Upstream:
             ok, value = outcome[0]
             if ok:
                 return value
+            if conn.auth_status is not None:
+                raise UpstreamAuthError(conn.auth_status) from value
             raise value
         raise conn.error or ConnectionError("connection to the hosted server closed")
 
@@ -124,18 +136,32 @@ class Upstream:
 
     async def _run(self, conn: _Connection) -> None:
         headers = {"Authorization": f"Bearer {self._config.api_key}"} if self._config.api_key else None
+
+        async def note_auth_status(response) -> None:
+            if response.status_code in (401, 403):
+                conn.auth_status = response.status_code
+
         try:
             async with httpx.AsyncClient(
-                headers=headers, timeout=httpx.Timeout(30.0, read=300.0), follow_redirects=False
+                headers=headers,
+                timeout=httpx.Timeout(30.0, read=300.0),
+                follow_redirects=False,
+                event_hooks={"response": [note_auth_status]},
             ) as http:
-                async with streamable_http_client(self._config.url, http_client=http) as (read, write, _):
-                    async with ClientSession(read, write) as session:
+                # mcp 1.x yields (read, write, get_session_id); 2.x yields (read, write).
+                async with streamable_http_client(self._config.url, http_client=http) as streams:
+                    async with ClientSession(streams[0], streams[1]) as session:
                         await session.initialize()
                         conn.session = session
                         conn.ready.set()
                         await conn.stop.wait()
         except BaseException as err:  # noqa: BLE001 - reported to whoever is waiting
             conn.error = err
+            if conn.session is None and conn.auth_status is not None:
+                # The handshake itself was refused (a bad key): say so rather than "could not reach".
+                auth_error = UpstreamAuthError(conn.auth_status)
+                auth_error.__cause__ = err
+                conn.error = auth_error
             if conn.session is not None and not self._closing and not conn.stop.is_set():
                 log.debug("upstream closed: %s", err)
             if isinstance(err, (KeyboardInterrupt, SystemExit)):
@@ -157,41 +183,21 @@ def create_server(config: Config, version: str) -> Server:
             finally:
                 await upstream.aclose()
 
-    server: Server = Server(
-        "cleanedweb",
-        version=version,
-        website_url="https://cleanedweb.com/docs/mcp/",
-        lifespan=lifespan,
-    )
-
-    def upstream() -> Upstream:
-        return server.request_context.lifespan_context
-
-    async def list_tools(req: types.ListToolsRequest) -> types.ServerResult:
-        up = upstream()
+    async def list_tools(up: Upstream, params) -> types.ListToolsResult:
         try:
-            result = await up.request(
-                types.ClientRequest(types.ListToolsRequest(params=req.params)), types.ListToolsResult
-            )
-            return types.ServerResult(result)
+            return await up.request(types.ListToolsRequest(params=params), types.ListToolsResult)
         except McpError:
             raise
         except BaseException as err:  # noqa: BLE001
             up.reset()
             if _is_auth_error(err):
-                raise McpError(types.ErrorData(code=types.INVALID_REQUEST, message=NEEDS_KEY)) from err
-            raise McpError(
-                types.ErrorData(code=types.INTERNAL_ERROR, message=f"Could not reach {config.url}: {_describe(err)}")
-            ) from err
+                raise mcp_error(types.INVALID_REQUEST, NEEDS_KEY) from err
+            raise mcp_error(types.INTERNAL_ERROR, f"Could not reach {config.url}: {_describe(err)}") from err
 
-    async def call_tool(req: types.CallToolRequest) -> types.ServerResult:
-        up = upstream()
+    async def call_tool(up: Upstream, params) -> types.CallToolResult:
         try:
             # send_request skips the client-side result checks call_tool() adds, so the answer is the hosted one.
-            result = await up.request(
-                types.ClientRequest(types.CallToolRequest(params=req.params)), types.CallToolResult
-            )
-            return types.ServerResult(result)
+            return await up.request(types.CallToolRequest(params=params), types.CallToolResult)
         except McpError as err:
             lowered = err.error.message.lower()
             if "sign in" in lowered or "unauthorized" in lowered or "api key" in lowered:
@@ -202,10 +208,30 @@ def create_server(config: Config, version: str) -> Server:
             text = NEEDS_KEY if _is_auth_error(err) else f"Could not reach {config.url}: {_describe(err)}"
             return _error_result(text)
 
-    server.request_handlers[types.ListToolsRequest] = list_tools
-    server.request_handlers[types.CallToolRequest] = call_tool
+    meta = {"version": version, "website_url": "https://cleanedweb.com/docs/mcp/", "lifespan": lifespan}
+
+    if MCP_MAJOR >= 2:
+        # Handlers are constructor arguments and get (ctx, params); results go back unwrapped.
+        async def on_list_tools(ctx, params) -> types.ListToolsResult:
+            return await list_tools(ctx.lifespan_context, params)
+
+        async def on_call_tool(ctx, params) -> types.CallToolResult:
+            return await call_tool(ctx.lifespan_context, params)
+
+        return Server("cleanedweb", **meta, on_list_tools=on_list_tools, on_call_tool=on_call_tool)
+
+    server: Server = Server("cleanedweb", **meta)
+
+    async def handle_list_tools(req: types.ListToolsRequest) -> types.ServerResult:
+        return server_result(await list_tools(server.request_context.lifespan_context, req.params))
+
+    async def handle_call_tool(req: types.CallToolRequest) -> types.ServerResult:
+        return server_result(await call_tool(server.request_context.lifespan_context, req.params))
+
+    server.request_handlers[types.ListToolsRequest] = handle_list_tools
+    server.request_handlers[types.CallToolRequest] = handle_call_tool
     return server
 
 
-def _error_result(text: str) -> types.ServerResult:
-    return types.ServerResult(types.CallToolResult(isError=True, content=[types.TextContent(type="text", text=text)]))
+def _error_result(text: str) -> types.CallToolResult:
+    return types.CallToolResult(isError=True, content=[types.TextContent(type="text", text=text)])
