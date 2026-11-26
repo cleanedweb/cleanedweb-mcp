@@ -2,8 +2,7 @@
 
 mcp 2.x renamed McpError to MCPError (built from code and message), moved to the httpx2 HTTP
 client, sends typed requests without the ClientRequest/ServerResult wrappers, and registers
-server handlers as constructor arguments that receive (ctx, params). Python 3.10 resolves to
-mcp 1.x, because httpx2 needs Python 3.11.
+server handlers as constructor arguments that receive (ctx, params). CI runs both majors.
 """
 
 from __future__ import annotations
