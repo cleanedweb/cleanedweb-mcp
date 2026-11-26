@@ -1,6 +1,8 @@
 <p align="center"><img src="assets/logo-400.png" width="96" alt="CleanedWeb"></p>
 
-# CleanedWeb MCP server 
+# CleanedWeb MCP server
+
+[![PyPI](https://img.shields.io/pypi/v/cleanedweb-mcp)](https://pypi.org/project/cleanedweb-mcp/) [![CI](https://github.com/cleanedweb/cleanedweb-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/cleanedweb/cleanedweb-mcp/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](https://github.com/cleanedweb/cleanedweb-mcp/blob/main/LICENSE)
 
 Give an AI agent structured records from public websites. CleanedWeb turns website collections
 (listings, products, jobs, articles, profiles) into maintained REST APIs. This MCP server lets an
